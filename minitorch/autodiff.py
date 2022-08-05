@@ -190,8 +190,14 @@ class History:
         Returns:
             list of numbers : a derivative with respect to `inputs`
         """
-        # TODO: Implement for Task 1.4.
-        raise NotImplementedError('Need to implement for Task 1.4')
+
+        if self.last_fn is None:
+            return d_output
+
+        return self.last_fn.backward(self.ctx, d_output)
+
+        # # TODO: Implement for Task 1.4.
+        # raise NotImplementedError('Need to implement for Task 1.4')
 
 
 class FunctionBase:
@@ -273,8 +279,19 @@ class FunctionBase:
         """
         # Tip: Note when implementing this function that
         # cls.backward may return either a value or a tuple.
-        # TODO: Implement for Task 1.3.
-        raise NotImplementedError('Need to implement for Task 1.3')
+
+        res=[]
+
+        vals=cls.backward(ctx, d_output)
+        if isinstance(vals, tuple):
+            for i, v in enumerate(vals):
+                if not is_constant(inputs[i]):
+                    res.append((inputs[i],v))
+        else:
+            if not is_constant(inputs[0]):
+                    res.append((inputs[0],vals))
+
+        return res
 
 
 # Algorithms for backpropagation
@@ -295,8 +312,22 @@ def topological_sort(variable):
         list of Variables : Non-constant Variables in topological order
                             starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+
+    ls=[]
+
+    if not is_constant(variable) and not variable.is_leaf():
+        for v in variable.history.inputs:
+            if not is_constant(v):
+                ls.append(v)
+
+                ls_v=topological_sort(v)
+                for v_ in ls_v:
+                    if v_ not in ls:
+                        ls.append(v_)
+
+            # ls.extend(topological_sort(v))   # may repeat
+
+    return ls
 
 
 def backpropagate(variable, deriv):
@@ -312,5 +343,13 @@ def backpropagate(variable, deriv):
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+
+    order=topological_sort(variable)
+
+    for v in order:
+        if not is_constant(v):
+            ls_deriv=v.history.backprop_step(deriv)
+            v.accumulate_derivative(ls_deriv)
+
+    # # TODO: Implement for Task 1.4.
+    # raise NotImplementedError('Need to implement for Task 1.4')

@@ -138,3 +138,19 @@ def test_backprop4():
     var4 = Function1.apply(var2, var3)
     var4.backward(d_output=5)
     assert var0.derivative == 10
+
+
+
+
+
+if __name__ == "__main__":
+    print("Hello World")
+
+
+    # Example 1: F1(0, v)
+    var = minitorch.Scalar(0)
+    var2 = Function1.apply(0, var)
+    var2.backward(d_output=5)
+    print(var.derivative)
+    assert var.derivative == 5
+    print("ok")
