@@ -27,7 +27,7 @@ def add(x, y):
 
 def neg(x):
     ":math:`f(x) = -x`"
-    return -x*1.0
+    return -x * 1.0
 
 
 def lt(x, y):
@@ -124,12 +124,12 @@ def log_back(x, d):
 
 def inv(x):
     ":math:`f(x) = 1/x`"
-    return 1 / (x + EPS)
+    return 1 / x
 
 
 def inv_back(x, d):
     r"If :math:`f(x) = 1/x` compute d :math:`d \times f'(x)`"
-    return d * (-1) / (x + EPS) ^ 2
+    return d * (-1) / (x + EPS) ** 2
 
 
 def relu_back(x, d):

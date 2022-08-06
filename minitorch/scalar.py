@@ -22,12 +22,23 @@ def central_difference(f, *vals, arg=0, epsilon=1e-6):
     Returns:
         float : An approximation of :math:`f'_i(x_0, \ldots, x_{n-1})`
     """
-
-    vals_1=list(vals).copy()
-    vals_2=list(vals).copy()
+    vals_1 = list(vals).copy()
+    vals_2 = list(vals).copy()
     vals_1[arg] += epsilon
     vals_2[arg] -= epsilon
-    return (f(*vals_1) - f(*vals_2)) / (2 * epsilon)
+    # print('f',f)
+    # print('+',vals_1)
+    # print('-',vals_2)
+    # print('d',f(*vals_1) - f(*vals_2))
+    a = f(*vals_1) - f(*vals_2)
+    b = 2 * epsilon
+    c = a / b
+    print("a", a)
+    print("b", b)
+    print("c", c)
+    res = (f(*vals_1) - f(*vals_2)) / (2 * epsilon)
+    print("res", res)
+    return res
 
 
 # ## Task 1.2 and 1.4
@@ -70,22 +81,31 @@ class Scalar(Variable):
 
     def __lt__(self, b):
         return LT.apply(self, b)
+
     def __gt__(self, b):
-        return LT.apply(b,self)
+        return LT.apply(b, self)
+
     def __eq__(self, b):
         return EQ.apply(self, b)
+
     def __sub__(self, b):
         return Add.apply(self, Neg.apply(b))
+
     def __neg__(self):
         return Neg.apply(self)
+
     def log(self):
         return Log.apply(self)
+
     def exp(self):
         return Exp.apply(self)
+
     def sigmoid(self):
         return Sigmoid.apply(self)
+
     def relu(self):
         return ReLU.apply(self)
+
     def get_data(self):
         "Returns the raw float value"
         return self.data
@@ -174,12 +194,12 @@ class Mul(ScalarFunction):
 
     @staticmethod
     def forward(ctx, a, b):
-        ctx.save_for_backward(a,b)
+        ctx.save_for_backward(a, b)
         return operators.mul(a, b)
 
     @staticmethod
     def backward(ctx, d_output):
-        a,b = ctx.saved_values
+        a, b = ctx.saved_values
         return operators.mul(b, d_output), operators.mul(a, d_output)
 
 
@@ -194,7 +214,8 @@ class Inv(ScalarFunction):
     @staticmethod
     def backward(ctx, d_output):
         a = ctx.saved_values
-        return operators.inv_back(a,d_output)
+        return operators.inv_back(a, d_output)
+
 
 class Neg(ScalarFunction):
     "Negation function"
@@ -205,7 +226,8 @@ class Neg(ScalarFunction):
 
     @staticmethod
     def backward(ctx, d_output):
-        return  -1.0*d_output
+        return -1.0 * d_output
+
 
 class Sigmoid(ScalarFunction):
     "Sigmoid function"
@@ -215,38 +237,39 @@ class Sigmoid(ScalarFunction):
         ctx.save_for_backward(a)
         return operators.sigmoid(a)
 
-
     @staticmethod
     def backward(ctx, d_output):
         a = ctx.saved_values
-        return operators.sigmoid(a)*(1-operators.sigmoid(a))*d_output
+        return operators.sigmoid(a) * (1 - operators.sigmoid(a)) * d_output
+
 
 class ReLU(ScalarFunction):
     "ReLU function"
 
     @staticmethod
     def forward(ctx, a):
+        ctx.save_for_backward(a)
         return operators.relu(a)
 
     @staticmethod
     def backward(ctx, d_output):
-        return operators.relu_back(d_output)
+        a = ctx.saved_values
+        return operators.relu_back(a, d_output)
+
 
 class Exp(ScalarFunction):
     "Exp function"
 
     @staticmethod
     def forward(ctx, a):
-        exp=operators.exp(a)
+        exp = operators.exp(a)
         ctx.save_for_backward(exp)
         return exp
-
 
     @staticmethod
     def backward(ctx, d_output):
         exp = ctx.saved_values
-        return exp*d_output
-
+        return exp * d_output
 
 
 class LT(ScalarFunction):
@@ -256,10 +279,10 @@ class LT(ScalarFunction):
     def forward(ctx, a, b):
         return operators.lt(a, b)
 
-
     @staticmethod
     def backward(ctx, d_output):
         return 0.0, 0.0
+
 
 class EQ(ScalarFunction):
     "Equal function :math:`f(x) =` 1.0 if x is equal to y else 0.0"
@@ -271,6 +294,7 @@ class EQ(ScalarFunction):
     @staticmethod
     def backward(ctx, d_output):
         return 0.0, 0.0
+
 
 def derivative_check(f, *scalars):
     """

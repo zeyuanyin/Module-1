@@ -1,3 +1,6 @@
+from re import M
+
+
 variable_count = 1
 
 
@@ -280,16 +283,16 @@ class FunctionBase:
         # Tip: Note when implementing this function that
         # cls.backward may return either a value or a tuple.
 
-        res=[]
+        res = []
 
-        vals=cls.backward(ctx, d_output)
+        vals = cls.backward(ctx, d_output)
         if isinstance(vals, tuple):
             for i, v in enumerate(vals):
                 if not is_constant(inputs[i]):
-                    res.append((inputs[i],v))
+                    res.append((inputs[i], v))
         else:
             if not is_constant(inputs[0]):
-                    res.append((inputs[0],vals))
+                res.append((inputs[0], vals))
 
         return res
 
@@ -313,19 +316,19 @@ def topological_sort(variable):
                             starting from the right.
     """
 
-    ls=[]
+    ls = [variable]
 
     if not is_constant(variable) and not variable.is_leaf():
         for v in variable.history.inputs:
             if not is_constant(v):
-                ls.append(v)
+                # ls.append(v)
 
-                ls_v=topological_sort(v)
-                for v_ in ls_v:
-                    if v_ not in ls:
-                        ls.append(v_)
+                # ls_v = topological_sort(v)
+                # for v_ in ls_v:
+                #     if v_ not in ls:
+                #         ls.append(v_)
 
-            # ls.extend(topological_sort(v))   # may repeat
+                ls.extend(topological_sort(v))  # need repeat  accumulate d
 
     return ls
 
@@ -344,12 +347,25 @@ def backpropagate(variable, deriv):
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
 
-    order=topological_sort(variable)
+    order = topological_sort(variable)
+
+    deriv_list = dict()
 
     for v in order:
-        if not is_constant(v):
-            ls_deriv=v.history.backprop_step(deriv)
-            v.accumulate_derivative(ls_deriv)
+        if v.is_leaf():
+            v.accumulate_derivative(deriv_list[v.unique_id])
+        else:
 
-    # # TODO: Implement for Task 1.4.
-    # raise NotImplementedError('Need to implement for Task 1.4')
+            if len(deriv_list) == 0:  # right-most/init
+                # ls_d_output=v.history.backprop_step(deriv)
+                back = v.history.last_fn.chain_rule(
+                    v.history.ctx, v.history.inputs, deriv
+                )
+
+            else:
+                back = v.history.last_fn.chain_rule(
+                    v.history.ctx, v.history.inputs, deriv_list[v.unique_id]
+                )
+
+            for v_, d_ in back:
+                deriv_list[v_.unique_id] = d_
